@@ -57,10 +57,12 @@ userSchema.pre("save",
     this.password =await bcrypt.hash(this.password, 10);
     next();
 });
+console.log("From model of the user");
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password);
 }
 userSchema.methods.generateAccessToken = async function () {
+
     return jwt.sign({
         _id: this._id,
         email: this.email,
@@ -75,6 +77,7 @@ userSchema.methods.generateAccessToken = async function () {
     )
 }
 userSchema.methods.generateRefreshToken = async function () {
+    console.log("Generating the refresh token")
     return jwt.sign(
         {
             _id: this._id,
@@ -90,4 +93,4 @@ userSchema.methods.generateRefreshToken = async function () {
     )
 }
 
-export const User = mongoose.Model("User", userSchema);
+export const User = mongoose.model("User", userSchema);

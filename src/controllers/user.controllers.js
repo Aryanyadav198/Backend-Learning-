@@ -23,32 +23,36 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // Use this type of syntax if you have to check multiple field are present or not in db
-    const findOne = User.findOne(
-        {
-            $or: [{
-                userName: userName,
-                email: email
-            }]
+    const isDuplicate = await User.findOne({
+        $or: [{ userName }, { email }]
+    });
+    if (isDuplicate) {
+        if (isDuplicate.email === email) {
+            throw new ApiErrors(409, "", null, "Email is already registered");
         }
-    );
-    if (findOne) {
-        throw new ApiErrors(409, null, "This name or userName of User already Existed")
+        if (isDuplicate.userName === userName) {
+            throw new ApiErrors(409, "", null, "Username is already taken");
+        }
+        // Optional fallback
+        throw new ApiErrors(409, "", null, "Email or username already in use");
     }
+    
+
     // Storing Path of the image 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    const avatarFile = req.files?.avatar[0];
+    const coverImageFile = req.files?.coverImage?.[0];
 
-    if (!avatarLocalPath) {
-        throw new ApiErrors(400, null, "Avatar image is required")
+    if (!avatarFile?.path) {
+        throw new ApiErrors(400, null, "Avatar image is required");
     }
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    const avatar = await uploadOnCloudinary(avatarFile.path);
+    const coverImage = coverImageFile ? await uploadOnCloudinary(coverImageFile.path) : null;
 
     if (!avatar) {
         throw new ApiErrors(500, null, "Something went wrong while uploading the Image")
     }
-    const user = User.create({
+    const user = await User.create({
         fullName,
         avatar: avatar.url,
         coverImage: coverImage?.url || "",
@@ -57,7 +61,7 @@ const registerUser = asyncHandler(async (req, res) => {
         userName: userName.toLowerCase()
     });
     // .select is use to extract all the given value 
-    const createdUser = User.findById(user._id).select(
+    const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     );
 

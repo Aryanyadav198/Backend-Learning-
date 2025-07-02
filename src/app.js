@@ -29,6 +29,7 @@ app.get("/async-error", async (req, res, next) => {
 
 // import userRouter
 import userRouter from "./routes/user.routers.js";
+import { ApiErrors } from "./utils/api_errors.js";
 
 // Declaring UserRouter
 
@@ -36,13 +37,13 @@ app.use("/api/v1/users", userRouter);
 
 
 // Global error handler
-app.use((err, req, res, next) => {
-    const statusCode = err.statuscode || 500;
 
-    console.error("Caught by global error handler:", err.message);
+app.use((err, req, res, next) => {
+    const statusCode = err.statuscode  || 500;
+    console.error("Caught by global error handler:\n", err.message);
     res.status(statusCode).json({
-        status: false,
-        message: `Oops! Something went wrong: ${err.message}`,
+        success: false,
+        message: `Oops! : ${err.message}`,
         data: {}
     });
 });
