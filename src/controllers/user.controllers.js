@@ -88,11 +88,6 @@ const registerUser = asyncHandler(async (req, res) => {
     return res.status(201).json(
         new ApiResponse(201, "User Created Successfully", { user: createdUser })
     )
-
-
-
-
-
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -130,6 +125,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const loggedInUser = await User.findById(user._id)
         .select("-password -refreshToken");
+        
 
 
     const option = {
@@ -158,13 +154,13 @@ const logOutUser = asyncHandler(async (req, res) => {
         }
     );
     const option = {
-    httpOnly: true,
-    secure: true
-};
-res.clearCookie("accessToken", option);
-res.clearCookie("refreshToken", option);
+        httpOnly: true,
+        secure: true
+    };
+    res.clearCookie("accessToken", option);
+    res.clearCookie("refreshToken", option);
 
-return res.status(200).json(new ApiResponse(200, "user loggedOut successfully", {}));
+    return res.status(200).json(new ApiResponse(200, "user loggedOut successfully", {}));
 
 
 });
