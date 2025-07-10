@@ -6,7 +6,6 @@ import { ApiResponse } from "../utils/api_response.js";
 import { json } from "express";
 import jwt from "jsonwebtoken";
 
-
 const generateRefreshAndAccessToken = async (userId) => {
     try {
         const user = await User.findById(userId);
@@ -220,6 +219,31 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 });
 
+const changePassword = asyncHandler(async (req, res) => {
+
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user?._id);
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+    console.log(`the changed password ${isPasswordCorrect}`);
+    if (!isPasswordCorrect) { throw new ApiErrors(400, "Invalid oldPassword"); }
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+
+        new ApiResponse(200, "Password changed Successfully")
+
+    );
+
+});
+
+const getUserProfile = asyncHandler(async(req, res)=>{
+
+    const user = await User.findById(req.user?._id).select("-password -refreshToken");
+    res.status(200).json(new ApiResponse(200, "Current user ",user));
+
+});
 
 
-export { registerUser, loginUser, logOutUser, refreshAccessToken };
+export { registerUser, loginUser, logOutUser, refreshAccessToken, changePassword , getUserProfile};
