@@ -1,10 +1,11 @@
 import { ApiErrors } from "../utils/api_errors.js";
 import { asyncHandler } from "../utils/async_handler.js";
 import { User } from "../models/user.model.js";
-import uploadOnCloudinary from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/api_response.js";
 import { json } from "express";
 import jwt from "jsonwebtoken";
+import uploadOnCloudinary from "../utils/cloudinary.js";
+// import { useReducer } from "react";
 
 const generateRefreshAndAccessToken = async (userId) => {
     try {
@@ -238,12 +239,81 @@ const changePassword = asyncHandler(async (req, res) => {
 
 });
 
-const getUserProfile = asyncHandler(async(req, res)=>{
+const getUserProfile = asyncHandler(async (req, res) => {
 
     const user = await User.findById(req.user?._id).select("-password -refreshToken");
-    res.status(200).json(new ApiResponse(200, "Current user ",user));
+    res.status(200).json(new ApiResponse(200, "Current user ", user));
+
+});
+
+const updateUserAccount = asyncHandler(async (req, res) => {
+
+    try {
+        const { fullName, email } = req.body;
+        if (!fullName || !email) {
+            console.log(fullName, email);
+            throw new ApiErrors(400, "FullName and email is Required");
+        }
+
+
+        const user = await User.findByIdAndUpdate(req.user?._id,
+            {
+                $set: {
+                    fullName,
+                    email
+                }
+            },
+            {
+                new: true
+            }
+        ).select("-password -refreshToken");
+
+        res.status(200)
+            .json(new ApiResponse(200, "Account Updated Successfully", user))
+    } catch (error) {
+        throw new ApiErrors(400, `${error.message}`);
+    }
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+
+    const avatarLocalPath = req.file?.path;
+
+    if (!avatarLocalPath) {
+        throw new ApiErrors(400, "Avatar image is required");
+    }
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+    if (!avatar || !avatar.url) { // Added '!avatar' check for robustness
+        throw new ApiErrors(400, "Error while uploading Avatar to cloud service."); // More descriptive error
+    }
+    const user = await User.findByIdAndUpdate(req.user?._id,
+        {
+            $set: {
+                avatar: avatar.url
+            }
+        }, {
+        new: true
+    }).select("-password -refreshToken");
+    if (!user) {
+        // This could happen if req.user?._id is invalid or user was deleted concurrently
+        throw new ApiErrors(404, "User not found or update failed.");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, "Avatar updated successfully", user)
+    );
 
 });
 
 
-export { registerUser, loginUser, logOutUser, refreshAccessToken, changePassword , getUserProfile};
+export {
+    registerUser,
+    loginUser,
+    logOutUser,
+    refreshAccessToken,
+    changePassword,
+    getUserProfile,
+    updateUserAccount,
+    updateUserAvatar
+};
