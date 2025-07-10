@@ -20,9 +20,6 @@ const generateRefreshAndAccessToken = async (userId) => {
 
     }
 }
-
-
-
 // Get user data from front-end
 // validate data is not empty
 // Check its user is already exist : username , email
@@ -143,67 +140,86 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logOutUser = asyncHandler(async (req, res) => {
 
-    await User.findByIdAndUpdate(
-        req.user._id,
-        {
-            $set: {
-                refreshToken: undefined
+    try {
+        await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $set: {
+                    refreshToken: undefined
+                }
+            },
+            {
+                new: true
             }
-        },
-        {
-            new: true
-        }
-    );
-    const option = {
-        httpOnly: true,
-        secure: true
-    };
-    res.clearCookie("accessToken", option);
-    res.clearCookie("refreshToken", option);
+        );
+        const option = {
+            httpOnly: true,
+            secure: true
+        };
+        res.clearCookie("accessToken", option);
+        res.clearCookie("refreshToken", option);
 
-    return res.status(200).json(new ApiResponse(200, "user loggedOut successfully", {}));
+        return res.status(200).json(new ApiResponse(200, "user loggedOut successfully", {}));
 
+    } catch (error) {
+        return ApiErrors(200, `Error is :${error.message}`);
+
+
+
+    }
 
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
 
-    const inComingRefreshToken = req.cookie.refreshToken || req.body.refreshToken;
+    const inComingRefreshToken = req.cookie?.refreshToken || req.body?.refreshToken;
 
     if (!inComingRefreshToken) {
-        throw new ApiErrors(401, "Unauthorized Access");
+        throw new ApiErrors(401, "Unauthorized Access: Refresh token required.");
+
     }
-  try {
-      const decodedToken =  jwt.verify(inComingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
-  
-      const user = await User.findById(decodedToken?._id);
-      if (!user) {
-          throw new ApiErrors(401, "Invalid Refresh Token");
-      }
-  
-      if (inComingRefreshToken !== user.refreshToken) {
-          throw new ApiErrors(401, "Refresh Token is expire or used");
-      }
-      const { accessToken, newRefreshToken } = await generateRefreshAndAccessToken(user._id);
-      const option = {
-          httpOnly: true,
-          secure: true
-      }
-      return res
-          .status(201)
-          .cookie("accessToken", accessToken, option)
-          .cookie("refreshToken", newRefreshToken, option)
-          .json(new ApiResponse(201, "AccessToken Refreshed",
-              { accessToken, refreshToken: newRefreshToken }
-          ));
-  } catch (error) {
-    throw new ApiErrors(500,"Server Error");
-    
-    
-  }
+    try {
+        const decodedToken = jwt.verify(inComingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+        const user = await User.findById(decodedToken?._id);
+        if (!user) {
+            throw new ApiErrors(401, "Invalid refresh token or user not found.");
+        }
+
+        if (inComingRefreshToken !== user.refreshToken) {
+            throw new ApiErrors(401, "Refresh token is invalid, expired, or already used. Please log in again.");
+        }
+        const { accessToken, refreshToken } = await generateRefreshAndAccessToken(user._id);
+        const option = {
+            httpOnly: true,
+            secure: true
+        }
+        return res
+            .status(200) // 7. Changed to 200 OK for successful operation
+            .cookie("accessToken", accessToken, option)
+            .cookie("refreshToken", refreshToken, option)
+            .json(new ApiResponse(200, "Access Token Refreshed Successfully",
+                { accessToken, refreshToken }
+            ));
+    } catch (error) {
+        // 8. Specific error handling for JWT issues
+        if (error.name === 'TokenExpiredError') {
+            throw new ApiErrors(401, "Refresh token expired. Please log in again.");
+        }
+        if (error.name === 'JsonWebTokenError') {
+            // Catches invalid signature, malformed token, etc.
+            throw new ApiErrors(401, "Invalid refresh token. Please log in again.");
+        }
+        // Re-throw custom ApiErrors if they were already thrown
+        if (error instanceof ApiErrors) {
+            throw error;
+        }
+        // Fallback for any other unexpected errors
+        throw new ApiErrors(500, `Internal Server Error: ${error.message}`);
+    }
 
 });
 
 
 
-export { registerUser, loginUser, logOutUser , refreshAccessToken};
+export { registerUser, loginUser, logOutUser, refreshAccessToken };
