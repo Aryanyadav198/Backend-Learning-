@@ -23,6 +23,16 @@ app.get("/async-error", async (req, res, next) => {
 
     }
 });
+app.get("/get-ip", async (req, res, next) => {
+    try {
+        res.status(200).json(new ApiResponse(200,"This is your ip",req.ip))
+
+    } catch (err) {
+        next(err);
+
+    }
+});
+
 
 
 
@@ -30,10 +40,13 @@ app.get("/async-error", async (req, res, next) => {
 // import userRouter
 import userRouter from "./routes/user.routers.js";
 import { ApiErrors } from "./utils/api_errors.js";
+import attendanceRouter from "./routes/attendance.router.js"
+import { ApiResponse } from "./utils/api_response.js";
 
 // Declaring UserRouter
 
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/attendance",attendanceRouter);
 
 
 // Global error handler

@@ -17,9 +17,7 @@ router.route("/register").post(
 
 // router.route("/login").post(upload.none(), loginUser);
 router.route("/login").post(loginUser);
-
 router.route("/logout").post(verifyJwt, logOutUser);
-
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/change-password").post(verifyJwt, changePassword);
 router.route("/get-user").get(verifyJwt, getUserProfile);
