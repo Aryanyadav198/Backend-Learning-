@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import { User } from "./user.model.js";
 import { DailyQr } from "./dailyQr.model.js";
+
 const punchHistorySchema = new Schema({
     userId: {
         type: Schema.Types.ObjectId,
