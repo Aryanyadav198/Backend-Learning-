@@ -32,11 +32,7 @@ app.get("/get-ip", async (req, res, next) => {
 
     }
 });
-
-
-
-
-
+ 
 // import userRouter
 import userRouter from "./routes/user.routers.js";
 import { ApiErrors } from "./utils/api_errors.js";
@@ -50,7 +46,6 @@ app.use("/api/v1/attendance",attendanceRouter);
 
 
 // Global error handler
-
 app.use((err, req, res, next) => {
     const statusCode = err.statuscode  || 500;
     console.error("Caught by global error handler:\n", err.message);

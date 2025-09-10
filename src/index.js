@@ -14,10 +14,6 @@ connectDb()
 
     });
 
-
-
-
-
 //iife
 // ; (async () => {
 //   try {
@@ -38,3 +34,4 @@ connectDb()
 // })()
 
 
+ 

@@ -6,8 +6,8 @@ import cookieParser from "cookie-parser";
 const app = express();
 app.use(cookieParser());
 
-app.use("/gitCookies", async  (req, res)=> {
-    res.cookie("cookie", "a;lkdjf",{
+app.use("/getCookies", async  (req, res)=> {
+    res.cookie("cookie", "alkdjf",{
         httpOnly: true,
         secure: true
     }).send({
