@@ -22,6 +22,7 @@ const connectMongoDb = async () => {
         console.error(`The error is catch in db/index.js: ${err}`)
         throw err
         
+        
     }
 }
 export default connectMongoDb;
