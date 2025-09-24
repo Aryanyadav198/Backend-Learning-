@@ -23,6 +23,8 @@ const connectMongoDb = async () => {
         throw err
         
         
+        
+
     }
 }
 export default connectMongoDb;
